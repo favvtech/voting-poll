@@ -1,0 +1,37 @@
+{% extends 'polls/base.html' %}
+{% load static %}
+
+{% block title %}{{ poll.question }} · Live Poll{% endblock %}
+
+{% block content %}
+<section class="panel">
+  <h1>{{ poll.question }}</h1>
+
+  {% if already_voted %}
+    <p>You've already voted in this poll.</p>
+    <a class="btn" href="{% url 'polls:results' poll.id %}">See results</a>
+  {% else %}
+    <form method="post">
+      {% csrf_token %}
+      <div class="choices">
+        {% for choice in poll.choices.all %}
+          <label class="choice">
+            <input type="radio" name="choice" value="{{ choice.id }}" required>
+            {{ choice.text }}
+          </label>
+        {% endfor %}
+      </div>
+      <div class="actions">
+        <button type="submit" class="btn">Vote</button>
+        <a href="{% url 'polls:results' poll.id %}">or just see results</a>
+      </div>
+    </form>
+  {% endif %}
+
+  {% include 'polls/share.html' %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'polls/share.js' %}"></script>
+{% endblock %}

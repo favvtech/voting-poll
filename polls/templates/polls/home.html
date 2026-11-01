@@ -1,0 +1,52 @@
+{% extends 'polls/base.html' %}
+
+{% block title %}Create a poll · Live Poll{% endblock %}
+{% block main_class %}wide{% endblock %}
+
+{% block content %}
+<div class="home-grid">
+  <section class="panel">
+    <h1>Create a poll</h1>
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      {% for error in form.non_field_errors %}
+        <p class="form-error">{{ error }}</p>
+      {% endfor %}
+
+      <label for="{{ form.question.id_for_label }}">Question</label>
+      {{ form.question }}
+      {% for error in form.question.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+
+      <p class="label">Options <span class="hint">at least 2, up to 6</span></p>
+      <ol class="option-inputs">
+        {% for field in form.option_fields %}
+          <li>{{ field }}</li>
+        {% endfor %}
+      </ol>
+
+      <button type="submit" class="btn">Create poll</button>
+    </form>
+  </section>
+
+  <aside class="recent">
+    <h2>Recent polls</h2>
+    {% if recent_polls %}
+      <ul>
+        {% for poll in recent_polls %}
+          <li>
+            <a href="{% url 'polls:vote' poll.id %}">{{ poll.question }}</a>
+            <small>
+              {{ poll.total|default:0 }} vote{{ poll.total|default:0|pluralize }}
+              &middot; <a href="{% url 'polls:results' poll.id %}">results</a>
+            </small>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="empty">Nothing here yet.</p>
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends 'polls/base.html' %}
+{% load static %}
+
+{% block title %}Results: {{ poll.question }} · Live Poll{% endblock %}
+
+{% block content %}
+<section class="panel" id="results" data-url="{% url 'polls:results_json' poll.id %}">
+  <h1>{{ poll.question }}</h1>
+  <p class="status">
+    <span id="last-vote" data-time="{{ data.last_vote_at|default:'' }}">
+      {% if poll.last_vote_at %}
+        Last vote: {{ poll.last_vote_at|date:"M j, g:i:s A" }} UTC
+      {% elif not data.total %}
+        No votes yet
+      {% endif %}
+    </span>
+    <span class="offline" id="connection-status" hidden>Connection lost, retrying…</span>
+  </p>
+
+  <div class="chart">
+    <div class="y-axis" aria-hidden="true">
+      <span style="bottom: 100%">100%</span>
+      <span style="bottom: 75%">75%</span>
+      <span style="bottom: 50%">50%</span>
+      <span style="bottom: 25%">25%</span>
+      <span style="bottom: 0">0%</span>
+    </div>
+
+    <ul class="plot">
+      {% for choice in data.choices %}
+        <li class="column{% if choice.leading %} leading{% endif %}" data-choice-id="{{ choice.id }}">
+          <span class="fill" style="height: {{ choice.percent }}%">
+            <span class="value"><b class="votes">{{ choice.votes }}</b><span class="sep"> · </span><span class="percent-part"><span class="percent">{{ choice.percent }}</span>%</span></span>
+          </span>
+        </li>
+      {% endfor %}
+    </ul>
+
+    <ul class="x-labels">
+      {% for choice in data.choices %}
+        <li class="{% if choice.leading %}leading{% endif %}" data-choice-id="{{ choice.id }}">{{ choice.text }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <p class="total"><b id="total-votes">{{ data.total }}</b> total vote<span id="total-plural">{{ data.total|pluralize }}</span></p>
+
+  {% if not already_voted %}
+    <a class="btn" href="{% url 'polls:vote' poll.id %}">Vote in this poll</a>
+  {% endif %}
+
+  {% include 'polls/share.html' %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'polls/share.js' %}"></script>
+<script src="{% static 'polls/results.js' %}"></script>
+{% endblock %}

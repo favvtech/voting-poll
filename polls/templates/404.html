@@ -1,0 +1,11 @@
+{% extends 'polls/base.html' %}
+
+{% block title %}Not found · Live Poll{% endblock %}
+
+{% block content %}
+<section class="panel">
+  <h1>Poll not found</h1>
+  <p>That poll doesn't exist. Double-check the link you were sent.</p>
+  <a class="btn" href="{% url 'polls:home' %}">Create a new poll</a>
+</section>
+{% endblock %}
