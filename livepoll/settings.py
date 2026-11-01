@@ -77,6 +77,22 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# Whitenoise serves static files in production on Vercel serverless
+try:
+    import whitenoise  # noqa: F401
+    MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
+    STORAGES = {
+        'default': {
+            'BACKEND': 'django.core.files.storage.FileSystemStorage',
+        },
+        'staticfiles': {
+            'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage',
+        },
+    }
+    WHITENOISE_USE_FINDERS = True
+except ImportError:
+    pass
+
 ROOT_URLCONF = 'livepoll.urls'
 
 TEMPLATES = [
