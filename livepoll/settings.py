@@ -14,6 +14,7 @@ import os
 from pathlib import Path
 
 import dj_database_url
+from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -21,20 +22,37 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 load_dotenv(BASE_DIR / '.env')
 
+# Vercel sets VERCEL=1 in its build and runtime environments.
+ON_VERCEL = bool(os.environ.get('VERCEL'))
+
+
+def env_list(name):
+    return [item.strip() for item in os.environ.get(name, '').split(',') if item.strip()]
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get(
-    'DJANGO_SECRET_KEY',
-    'django-insecure-2$^henbb21!*_9eagy=m!(mo^*b(w79_2@*udteh+#ewzy10y!',
-)
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
+if not SECRET_KEY:
+    if ON_VERCEL:
+        raise ImproperlyConfigured('Set the DJANGO_SECRET_KEY environment variable on Vercel.')
+    SECRET_KEY = 'django-insecure-2$^henbb21!*_9eagy=m!(mo^*b(w79_2@*udteh+#ewzy10y!'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
+DEBUG = os.environ.get('DJANGO_DEBUG', 'False' if ON_VERCEL else 'True') == 'True'
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '.vercel.app', *env_list('DJANGO_ALLOWED_HOSTS')]
+
+CSRF_TRUSTED_ORIGINS = ['https://*.vercel.app', *env_list('DJANGO_CSRF_TRUSTED_ORIGINS')]
+
+# Vercel terminates HTTPS and forwards the original scheme in this header.
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 
 
 # Application definition
@@ -82,20 +100,22 @@ WSGI_APPLICATION = 'livepoll.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
 
-# Supabase Postgres connection string, read from DATABASE_URL in .env.
-# Use the Supabase "Session pooler" URI (port 5432); the transaction pooler
-# (port 6543) does not support the server-side features Django relies on.
+# Supabase Postgres connection string (Supabase > Connect > Transaction pooler),
+# read from DATABASE_URL in .env locally or from Vercel's environment variables.
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
 if DATABASE_URL:
     DATABASES = {
         'default': dj_database_url.parse(
             DATABASE_URL,
-            conn_max_age=600,
-            conn_health_checks=True,
+            conn_max_age=0,
             ssl_require=True,
         )
     }
+    # Supabase's transaction pooler can't keep prepared statements or
+    # server-side cursors between transactions.
+    DATABASES['default'].setdefault('OPTIONS', {})['prepare_threshold'] = None
+    DATABASES['default']['DISABLE_SERVER_SIDE_CURSORS'] = True
 else:
     DATABASES = {
         'default': {
@@ -142,6 +162,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 
 # Email

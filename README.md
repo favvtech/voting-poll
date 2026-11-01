@@ -12,7 +12,7 @@ To start the test server and open the app:
    .\venv\Scripts\Activate.ps1
    pip install -r requirements.txt
    ```
-2. Copy `.env.example` to `.env` and set `DATABASE_URL` to your Supabase connection string (Supabase dashboard > **Connect** > **Session pooler** URI, with your database password filled in). If `DATABASE_URL` is not set, the app falls back to a local SQLite file.
+2. Copy `.env.example` to `.env` and set `DATABASE_URL` to your Supabase connection string (Supabase dashboard > **Connect** > **Transaction pooler** URI, with your database password filled in). If `DATABASE_URL` is not set, the app falls back to a local SQLite file.
 3. Create the database tables and start the server:
    ```powershell
    python manage.py migrate
@@ -21,6 +21,12 @@ To start the test server and open the app:
 4. Open [http://127.0.0.1:8000/](http://127.0.0.1:8000/) in a web browser.
 
 Run the automated tests with `python manage.py test`.
+
+The app can also be deployed to Vercel: import the GitHub repository in Vercel and set the `DATABASE_URL` and `DJANGO_SECRET_KEY` environment variables. Generate a secret key with:
+
+```powershell
+python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+```
 
 [Software Demo Video](http://youtube.link.goes.here)
 
@@ -37,6 +43,7 @@ A poll ID that doesn't exist returns a 404 "Poll not found" page.
 - Visual Studio Code / Cursor, Git, and Windows PowerShell
 - Django's built-in development server and test runner
 - Supabase for hosting the PostgreSQL database
+- Vercel for hosting the deployed app
 
 Languages and libraries:
 
